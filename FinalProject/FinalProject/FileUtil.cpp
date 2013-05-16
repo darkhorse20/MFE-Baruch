@@ -86,7 +86,7 @@ int getColUsingString(ifstream* file, vector<double> &d_vals, int d_col, bool sk
 				
 				while( getline(stream, word, ',') ) {
 					if(col == d_col) {
-						cout << "Adding: " << word << ", to row: " << rows <<"\n";
+						//cout << "Adding: " << word << ", to row: " << rows <<"\n";
 						d_vals.push_back(atof(word.c_str()));
 					}
 					col++;
