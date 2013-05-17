@@ -11,7 +11,7 @@ struct Func {
 		double *v = new double[n];
 		double *estimates = new double[n];
 
-		estimate_extended_kalman_parameters_1_dim(prxs, 0.0, n,
+		estimate_extended_kalman_parameters_1_dim(prxs, 0.025, n,
 			x[0],x[1],x[2],x[3], u, v, estimates);
 		
 		Doub neg_lli_hood = 0.0;
@@ -20,8 +20,10 @@ struct Func {
 		}
 
 		cout << "Log likelihood is: " << neg_lli_hood << "\n";
-		return (neg_lli_hood);
-	
+		return neg_lli_hood;
+
+		//return (x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
+
 	}
 
 	double *prxs;
@@ -87,14 +89,15 @@ void Minimizer::estimate_params(double *prxs, int n) {
 	Int nr_of_params = 4;
 
 	Int i;
-    VecDoub pinit(nr_of_params , 0.0); // Initial guess is (0, 0)
-	pinit[0]= 0.4;
-	pinit[1]=-0.3;
-	pinit[2]=0.3;
-	pinit[4]=0.6;
+    
+	VecDoub pinit(nr_of_params , 0.0); 
+	pinit[0]= 0.15;
+	pinit[1]= 10.0;
+	pinit[2]= 0.02;
+	pinit[3]=-0.51;
 
 	VecDoub pmin;
-	Doub tol = 0.0001;
+	Doub tol = 0.001;
 	cout << "calling powell minimization";
 
 	Powell <Func> powell(filter, tol);

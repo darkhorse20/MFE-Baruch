@@ -32,10 +32,10 @@ int main(int argc, char *argv[] ) {
 	int n_rows = getColUsingString(&datafile, stock_prices, 2, true);
 
 	cout << "Rows returned from getCol: " << stock_prices.size() << "\n"; 
-	for(int i=0; i<stock_prices.size(); i++) {
-		stock_prices[i] = log(stock_prices[i]);
-		cout << "Row: " << i << " log stock price: " << stock_prices[i] << '\n';
-	}
+	//for(int i=0; i<stock_prices.size(); i++) {
+	//	stock_prices[i] = log(stock_prices[i]);
+	//	cout << "Row: " << i << " log stock price: " << stock_prices[i] << '\n';
+	//}
 	cout << "Calling the EKF now ... \n";
 	
 	int n = stock_prices.size();
