@@ -4,15 +4,18 @@
 
 struct Func {
 	
-	Func(double *ln_stock_prxs, int nr_prxs): prxs(ln_stock_prxs), n(nr_prxs) {	}
+	Func(double *ln_stock_prxs, int nr_prxs, double p_val): prxs(ln_stock_prxs), n(nr_prxs), p(p_val) {	}
 	Doub operator()(VecDoub_I & x) {
 		
 		double *u = new double[n];
 		double *v = new double[n];
 		double *estimates = new double[n];
 
-		estimate_extended_kalman_parameters_1_dim(prxs, 0.025, n,
+		estimate_extended_kalman_parameters_1_dim_fin_proj(prxs, 0.0, n, p,
 			x[0],x[1],x[2],x[3], u, v, estimates);
+
+		//estimate_extended_kalman_parameters_1_dim(prxs, 0.0, n,
+		//	x[0],x[1],x[2],x[3], u, v, estimates);
 		
 		Doub neg_lli_hood = 0.0;
 		for(int i=0; i < n; i++) {
@@ -28,6 +31,7 @@ struct Func {
 
 	double *prxs;
 	int n;
+	double p;
 
 	void estimate_extended_kalman_parameters_1_dim(
 	double *log_stock_prices,
@@ -71,6 +75,71 @@ struct Func {
 		P=(1.0-K*H)*P1;
 	}
 }
+
+void estimate_extended_kalman_parameters_1_dim_fin_proj(
+	double *log_stock_prices,
+	double muS,
+	int n_stock_prices,
+	double p,
+	double kappa,
+	double bigV,
+	double xi,
+	double rho,
+	double *u,
+	double *v,
+	double *estimates)
+{
+	int i1;
+	double x, x1, W, H, A;
+	double P, P1, z, U, K;
+	double delt=1.0/252.0;
+	double eps=0.00001;
+	double omega;
+	double theta;
+	double pow_xi;
+	omega = kappa*bigV; //K(V - v_k) = w - theta*v_k = theta(w/theta - v_k)
+	theta = kappa;
+
+	x = 0.04;
+	P=0.01;
+	u[0]=u[n_stock_prices-1]=0.0;
+	v[0]=v[n_stock_prices-1]=1.0;
+	estimates[0]=estimates[1]=log_stock_prices[0]+eps;
+
+	for (i1=1;i1<n_stock_prices-1;i1++)
+	{
+		if (x<0) x=0.00001;
+
+		pow_xi = pow(x,p-0.5);
+
+		x1 = x + ( omega - (theta-0.5*rho*xi*pow_xi) * x) * delt +
+			rho*xi* pow_xi * (log_stock_prices[i1]-log_stock_prices[i1-1]); 
+			// xi* sqrt( 1 - pow(rho,2.0)) * pow(x,p)* sqrt(delt) * ;
+
+		A = 1.0- (theta-0.5*rho*xi*(p+0.5)*pow(x, (p-0.5) ))*delt 
+			+ (p - 0.5)*rho*xi*pow(x, p - 1.5)*(log_stock_prices[i1]-log_stock_prices[i1-1]) ;
+
+		W = xi*sqrt((1-rho*rho) * delt) * pow(x,p);
+		
+		P1 = W*W + A*P*A;
+		
+		if (x1<0) x1=0.00001;
+	
+		H = -0.5*delt;
+		U = sqrt(x1*delt);
+		K = P1*H/( H*P1*H + U*U);
+		
+		z = log_stock_prices[i1+1];
+		x = x1 + K * (z - (log_stock_prices[i1] + (muS-0.5*x1)*delt));
+		u[i1] = z - (log_stock_prices[i1] + (muS-0.5*x1)*delt);
+		v[i1] = H*P1*H + U*U;
+		estimates[i1+1] = log_stock_prices[i1] + (muS-0.5*x1)*delt;
+		
+		P=(1.0-K*H)*P1;
+	}
+}
+
+
 };
 
 Minimizer::Minimizer(void)
@@ -82,10 +151,10 @@ Minimizer::~Minimizer(void)
 {
 }
 
-void Minimizer::estimate_params(double *prxs, int n) {
+void Minimizer::estimate_params(double *prxs, int n, double p) {
 
 	cout << " estimating params\n";
-	Func filter(prxs,n);
+	Func filter(prxs,n, p);
 	Int nr_of_params = 4;
 
 	Int i;
@@ -94,10 +163,10 @@ void Minimizer::estimate_params(double *prxs, int n) {
 	pinit[0]= 0.15;
 	pinit[1]= 10.0;
 	pinit[2]= 0.02;
-	pinit[3]=-0.51;
+	pinit[3]=-0.7;
 
 	VecDoub pmin;
-	Doub tol = 0.001;
+	Doub tol = 0.000001;
 	cout << "calling powell minimization";
 
 	Powell <Func> powell(filter, tol);

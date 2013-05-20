@@ -91,12 +91,26 @@ int getColUsingString(ifstream* file, vector<double> &d_vals, int d_col, bool sk
 					}
 					col++;
 				}
+				//cout << "Cols read: " << col <<"\n" ;
+
+				if(col == 1) {
+					cout << "Only one column\n" ;
+					getline(stream, word);
+					//cout << "Adding: " << word << ", to row: " << rows <<"\n";
+					d_vals.push_back(atof(word.c_str()));
+
+				}
 
 				getline ((*file),line);
 				rows++;
 				col = 1;
 			}
-		} 
+		} else {
+			cout << "File not good.\n";
+		}
+		return rows;
+	} else {
+		cout << "File not found. not open.\n";
 		return rows;
 	}
 }

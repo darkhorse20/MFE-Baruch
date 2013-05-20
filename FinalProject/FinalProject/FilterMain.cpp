@@ -27,9 +27,9 @@ int main(int argc, char *argv[] ) {
 	vector<double> stock_prices; 
 	//stock_prices = &init_prx;
 
-	ifstream datafile = openForRead ("C:\\aya\\Documents\\MFE\\Baruch\\Volatility Filtering and Estimation\\Data\\datafull.csv");
-	//int n_rows = getCol(&datafile, stock_prices, 2, true);
-	int n_rows = getColUsingString(&datafile, stock_prices, 2, true);
+	ifstream datafile = openForRead ("C:\\aya\\Documents\\MFE\\Baruch\\Volatility Filtering and Estimation\\Data\\Final-Project.csv");
+	//int n_rows = getCol(&datafile, stock_prices, 1, true);
+	int n_rows = getColUsingString(&datafile, stock_prices, 1, false);
 
 	cout << "Rows returned from getCol: " << stock_prices.size() << "\n"; 
 	//for(int i=0; i<stock_prices.size(); i++) {
@@ -39,9 +39,10 @@ int main(int argc, char *argv[] ) {
 	cout << "Calling the EKF now ... \n";
 	
 	int n = stock_prices.size();
+	double p = 0.5;
 	double *prxs = &(stock_prices[0]);
 	Minimizer min;
-	min.estimate_params(prxs,n);
+	min.estimate_params(prxs,n, p);
 
 	int c = getchar();
 	return 0;
