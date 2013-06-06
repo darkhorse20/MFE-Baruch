@@ -1,17 +1,24 @@
 #include "Minimizer.h"
 #include "nr3.h"
 #include "mins_ndim.h"
+#include <random>
 
 struct Func {
 	
-	Func(double *ln_stock_prxs, int nr_prxs, double p_val): prxs(ln_stock_prxs), n(nr_prxs), p(p_val) {	}
+	Func(Filter *filter_type, double *ln_stock_prxs, double *res_estimates, double* u_vals, double *v_vals, int nr_prxs, double p_val): 
+prxs(ln_stock_prxs), n(nr_prxs), p(p_val), estimates(res_estimates) , u(u_vals), v(v_vals), filter(filter_type)
+		{	}
+
 	Doub operator()(VecDoub_I & x) {
 		
-		double *u = new double[n];
-		double *v = new double[n];
-		double *estimates = new double[n];
+		//double *u = new double[n];
+		//double *v = new double[n];
+		//double *estimates = new double[n];
 
-		estimate_extended_kalman_parameters_1_dim_fin_proj(prxs, 0.0, n, p,
+		//filter.estimate_extended_kalman_parameters_1_dim_fin_proj(prxs, 0.0, n, p,
+		//	x[0],x[1],x[2],x[3], u, v, estimates);
+
+		filter->applyFilter(prxs, 0.0, n, p,
 			x[0],x[1],x[2],x[3], u, v, estimates);
 
 		//estimate_extended_kalman_parameters_1_dim(prxs, 0.0, n,
@@ -22,14 +29,15 @@ struct Func {
 			neg_lli_hood += log(v[i])+u[i]*u[i]/v[i];
 		}
 
-		cout << "Log likelihood is: " << neg_lli_hood << "\n";
+		//cout << "Log likelihood is: " << neg_lli_hood << "\n";
 		return neg_lli_hood;
 
 		//return (x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
 
 	}
 
-	double *prxs;
+	Filter *filter;
+	double *prxs, *estimates, *u, *v;
 	int n;
 	double p;
 
@@ -106,6 +114,11 @@ void estimate_extended_kalman_parameters_1_dim_fin_proj(
 	v[0]=v[n_stock_prices-1]=1.0;
 	estimates[0]=estimates[1]=log_stock_prices[0]+eps;
 
+	if(omega < 0) omega = 0.2;
+	if(theta < 0) theta = 8.0;
+	if(rho > 1 || rho < -1 ) rho = -0.5;
+	if(xi < 0) xi = 0.04;
+
 	for (i1=1;i1<n_stock_prices-1;i1++)
 	{
 		if (x<0) x=0.00001;
@@ -151,10 +164,17 @@ Minimizer::~Minimizer(void)
 {
 }
 
-void Minimizer::estimate_params(double *prxs, int n, double p) {
+void Minimizer::estimate_params(Filter *filter_type, double *prxs, double *estimates, double *u, double *v, int n, double p) {
+
+	std::default_random_engine generator;
+	std::uniform_real_distribution<double> rho_dist(-0.1,0.0);
+	std::uniform_real_distribution<double> kappa_dist(0.0,1.0);
+	std::uniform_real_distribution<double> v_dist(0.0,100.0);
+	std::uniform_real_distribution<double> xi_dist(0.0,5.0);
+
 
 	cout << " estimating params\n";
-	Func filter(prxs,n, p);
+	Func filter(filter_type, prxs, estimates, u, v, n, p);
 	Int nr_of_params = 4;
 
 	Int i;
@@ -166,11 +186,20 @@ void Minimizer::estimate_params(double *prxs, int n, double p) {
 	pinit[3]=-0.7;
 
 	VecDoub pmin;
-	Doub tol = 0.000001;
-	cout << "calling powell minimization";
+	Doub tol = 0.00000001;
+	cout << "Calling powell minimization \n";
 
 	Powell <Func> powell(filter, tol);
 	pmin = powell.minimize(pinit);
+
+	while (pmin[3] > 1.0 || pmin[3] < -1.0 || pmin[0] < 0.0) {
+		cout << "Rho or Kappa is out of constrained range \n";
+		pinit[0]= kappa_dist(generator);
+		pinit[1]= v_dist(generator);
+		pinit[2]= xi_dist(generator);
+		pinit[3]=rho_dist(generator);
+		pmin = powell.minimize(pinit);
+	}
 
 	cout << "Number of Powell iterations  =  " << powell.iter << endl << endl;
     cout << "After Powell, minimum value  = ";

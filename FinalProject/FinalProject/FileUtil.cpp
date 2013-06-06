@@ -186,3 +186,17 @@ int getCol(ifstream* file, double* d_vals, int d_col, bool skip_hdr) {
 	} 
 
 }
+
+void saveToFile(string file, double* data_array, string separator, int size) {
+
+	ostringstream stream;
+	ofstream op_file = openForWrite(file);
+	for(int i =0; i < size; i++) {
+		stream << data_array[i] << "\n";
+		
+	}
+	write(&op_file, &stream.str());
+	closeFile(&op_file);
+	
+
+}

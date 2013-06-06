@@ -1,7 +1,8 @@
-#include "Filter.h"
-
-
-void Filter::applyFilter(double *log_stock_prices,
+#pragma once
+class Filter
+{
+public:
+	virtual void applyFilter(double *log_stock_prices,
 	double muS,
 	int n_stock_prices,
 	double p,
@@ -11,4 +12,6 @@ void Filter::applyFilter(double *log_stock_prices,
 	double rho,
 	double *u,
 	double *v,
-	double *estimates) { } ;
+	double *estimates);
+};
+

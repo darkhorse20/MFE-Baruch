@@ -21,3 +21,5 @@ void closeFile(ofstream* file);
 int getCol(ifstream* file, double* d_vals, int d_col, bool skip_hdr);
 
 int getColUsingString(ifstream* file, vector<double> &d_vals, int d_col, bool skip_hdr);
+
+void saveToFile(string file, double* data_array, string separator, int size);
