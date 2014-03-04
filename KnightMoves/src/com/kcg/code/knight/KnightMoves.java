@@ -1,4 +1,7 @@
+package com.kcg.code.knight;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class KnightMoves {
@@ -7,9 +10,8 @@ public class KnightMoves {
     private int keySeqLength;
     
     public static void main(String[] args) {
-        KnightMoves km = new KnightMoves(10);
-        km.getTotalSequencesForMoves();
-        
+        KnightMoves km = new KnightMoves(32);
+        km.getTotalSequencesForMoves();        
     }
     
     public KnightMoves(int seqLength) {
@@ -47,7 +49,6 @@ public class KnightMoves {
     	if(v == 'A' || v =='E' || v == 'I' || v == 'O') {
     		return true;
     	}
-    	
     	return false;
     }
     
@@ -101,20 +102,20 @@ public class KnightMoves {
     }
     
     private boolean isNotNullPoint(int r, int c) {
-    	if(keyPad[r][c] != null) {
+    	if(keyPad[r][c] != null && r >= 0 && c >=0) {
     		return true;	
+    	
     	} else {
     		//System.out.println("Hit a null key at: " + r + "," + c);
     		return false;
     	}
-    	
-        
     }
     
     public void getTotalSequencesForMoves() {
         
     	int totalSequences = 0;
-        //All starting points on the keypad
+        
+    	//All starting points on the keypad
         for(int i=0;i<4;i++ ) {
             for(int j=0;j<5; j++) {
                 //Skip the empty cells in the grid
@@ -123,12 +124,15 @@ public class KnightMoves {
                 }
                 
                 if(isVowel(keyPad[i][j].getKey())) {
-                	countMoves(keySeqLength,1, keyPad[i][j]);
+                	
+                	countMoves(keySeqLength-1,1, keyPad[i][j]);
                 	
                 } else {
-                	countMoves(keySeqLength,2, keyPad[i][j]);
+                	countMoves(keySeqLength-1,2, keyPad[i][j]);
                 	
                 }
+                
+                //countMoves(keySeqLength,2, keyPad[i][j]);
                 
                 System.out.println("Done for Point: " + i + "," + j + ". Count: " + nrOfSequences);
                 totalSequences += nrOfSequences;
@@ -141,36 +145,50 @@ public class KnightMoves {
     
     public void countMoves(int movesLeft, int vowelsLeft, Point pt) {
     	
-    	
     	if (movesLeft > 0) {
     		
     		List<Point> newPoints = getKnightMoves(pt);
     		
-    		if(movesLeft ==1) {
-    			nrOfSequences += newPoints.size();
-    		}
-    		
     		for(Point p: newPoints) {
     			
     			if(isVowel(p.getKey())) {
-    				
+    				 
     				if (vowelsLeft >0) {
+/*    					if(movesLeft == 1) {
+    						nrOfSequences++;
+    					
+    					}*/
     					countMoves(movesLeft-1,vowelsLeft-1,p);
     					
-    				} else {
-    		    		if(movesLeft ==1) {
-    		    			nrOfSequences--;
-    		    		}
-    		    		
     				}
     				
     			} else {
     				countMoves(movesLeft-1,vowelsLeft,p);
+/*					if(movesLeft == 1) {
+						nrOfSequences++;
+						
+					}*/
     				
     			}
     		}
     		
+    	} else {
+    		nrOfSequences++;
     	}
+    }
+    
+    private HashMap<String, Integer> sequenceCountCache = new HashMap<String, Integer>();
+    
+    private void cacheResult(Point p, int movesLeft, int vowelsLeft, int resultCount) {
+    	sequenceCountCache.put(makeKey(p, movesLeft, vowelsLeft) , new Integer(resultCount));
+    }
+    
+    private int getResultFromCache(Point p, int movesLeft, int vowelsLeft) {
+    	return sequenceCountCache.get(makeKey(p, movesLeft, vowelsLeft));
+    }
+    
+    private String makeKey(Point p, int movesLeft, int vowelsLeft) {
+    	return new StringBuilder().append(p.getKey()).append(movesLeft).append(vowelsLeft).toString();
     }
     
     private class Point {
