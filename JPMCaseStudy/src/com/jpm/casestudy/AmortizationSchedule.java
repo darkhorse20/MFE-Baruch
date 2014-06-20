@@ -57,37 +57,37 @@ public class AmortizationSchedule {
 		double z = (1+r12);
 		if(age < fixedTerm) {
 			Double mthly = getMonthlyPayment();
-			Double principal = mthly - remainingDebt*r/12;
+			Double principal = 0.0d; //mthly - remainingDebt*r/12;
+			Date currDate = addMonths(1);
 			int j=0;
 			for (int i=0; i < nrYears; i++) {
-				if(i<(fixedTerm - age)) { //Do fixed rate schedule
-					
-					schedule.add(new Record(addMonths(i), age+i, r, remainingDebt, principal, mthly - principal));
+			    
+				if(i<=(fixedTerm - age)) { //Do fixed rate schedule
+				    
+                    principal = mthly - remainingDebt*r12;
+                    
+					schedule.add(new Record(currDate, age+i, r, remainingDebt, principal, mthly - principal));
 					
 					remainingDebt = remainingDebt*z - mthly;
-					principal = mthly - remainingDebt*r12; 
 					
 				} else {//We are in ARM
+				  Double flRate = (0.01*eVars.getLibor(currDate)+0.02)/12;
+                    //double flRate = (0.01*0.414476 + 0.02)/12;
+                    
+				    mthly = getMonthlyPayment(remainingDebt, flRate, 36);
+				    principal = mthly - remainingDebt*flRate;
+				    
+					schedule.add(new Record(currDate, age+i, r, remainingDebt, principal, mthly - principal));
 					
-					schedule.add(new Record(addMonths(i), age+i, r, remainingDebt, principal, mthly - principal));
-					
-					//double flRate = (0.01*(eVars.getLibor().get(j))+0.02)/12;
-					double flRate = (0.01*0.414476+0.02)/12;
-
-					mthly = getMonthlyPayment(remainingDebt, flRate, 37);
-					remainingDebt = remainingDebt*(1+ flRate) - mthly;
-					principal = mthly - remainingDebt*flRate;
+                    remainingDebt = remainingDebt*(1+ flRate) - mthly;					
 					j++;
 				}
+				currDate = addMonths(1);
 			}
 			
 		} else {
 			//We're passed the fixed term. It is assumed a starting balance and index rate is available.
 		}
-		
-	}
-	
-	public void calcSchedule(Double amt, Double rate, Double N) {
 		
 	}
 	
@@ -103,7 +103,7 @@ public class AmortizationSchedule {
 	}
 	
 	public void saveSchedule() {
-		Utils.write(schedule, "C:\\ac-fe\\JPMCaseStudy\\schedule.xls");
+		Utils.write(schedule, "//Msad\\root\\NA\\NY\\users\\anuroopy\\My Documents\\aya\\MFE\\Quant Prep\\schedules.xls");
 	}
 
 	public class Record {
